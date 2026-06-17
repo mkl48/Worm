@@ -1,0 +1,11 @@
+[package]
+name = "ker/worm"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+description = "Adaptive neural intelligence for Roblox games. MLP classifiers, Q-learning combat agents, spatial filters, and NEAT evolution -- one unified profile API."
+license = "MIT"
+authors = ["mkl48"]
+include = ["default.project.json", "wally.toml", "src"]
+
+[dependencies]
