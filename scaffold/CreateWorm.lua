@@ -17,6 +17,8 @@ local MLP      = require(script.MLP)
 local QLearner = require(script.QLearner)
 local CSF      = require(script.CSF)
 local NEAT     = require(script.NEAT)
+local League   = require(script.League)
+local Ensemble = require(script.Ensemble)
 
 local Worm = {}
 
@@ -26,6 +28,9 @@ Worm.MLP    = "MLP"
 Worm.QLEARN = "QLEARN"
 Worm.CSF    = "CSF"
 Worm.NEAT   = "NEAT"
+
+Worm.League   = League
+Worm.Ensemble = Ensemble
 
 local IMPLS = {
     MLP    = MLP,
@@ -1861,6 +1866,154 @@ end
 return NEAT
 ]====]
 n_Worm_NEAT.Parent = n_Worm
+
+local n_Worm_League = Instance.new("ModuleScript")
+n_Worm_League.Name = "League"
+n_Worm_League.Source = [====[
+local Promise = require(script.Parent.Promise)
+
+-- A bounded pool of frozen snapshots taken from a live Profile, used to
+-- spar against past versions of itself (self-play) instead of plateauing
+-- against a single static opponent. League only stores/serves raw export
+-- data -- materializing a sparring Profile from it is the caller's job via
+-- Worm.load(), which keeps this module decoupled from Worm's own loader.
+local League = {}
+League.__index = League
+
+function League.new(profile, opts)
+    opts = opts or {}
+
+    local self = setmetatable({}, League)
+    self._profile = profile
+    self._keep    = opts.keep or 10
+    self._pool    = {}
+
+    return self
+end
+
+function League:checkpoint(label)
+    return Promise.new(function(resolve, reject)
+        self._profile:export()
+            :next(function(data)
+                table.insert(self._pool, {
+                    data    = data,
+                    label   = label,
+                    savedAt = os.clock(),
+                })
+
+                while #self._pool > self._keep do
+                    table.remove(self._pool, 1)
+                end
+
+                resolve(#self._pool)
+            end)
+            :toss(reject)
+    end)
+end
+
+function League:size()
+    return #self._pool
+end
+
+function League:sample()
+    if #self._pool == 0 then
+        return nil
+    end
+    return self._pool[math.random(1, #self._pool)].data
+end
+
+function League:latest()
+    if #self._pool == 0 then
+        return nil
+    end
+    return self._pool[#self._pool].data
+end
+
+function League:history()
+    local labels = {}
+    for _, entry in ipairs(self._pool) do
+        table.insert(labels, entry.label)
+    end
+    return labels
+end
+
+return League
+]====]
+n_Worm_League.Parent = n_Worm
+
+local n_Worm_Ensemble = Instance.new("ModuleScript")
+n_Worm_Ensemble.Name = "Ensemble"
+n_Worm_Ensemble.Source = [====[
+local Promise = require(script.Parent.Promise)
+
+-- A meta-controller over a set of named Profiles ("stances"/sub-policies).
+-- A selector Profile decides which member handles the current input; the
+-- chosen member then makes the actual decision. Members can be any Profile
+-- type -- an MLP, a QLearner, even a NEAT champion -- since they all share
+-- the same Profile API.
+local Ensemble = {}
+Ensemble.__index = Ensemble
+
+function Ensemble.new(config)
+    local self = setmetatable({}, Ensemble)
+
+    self._selector = config.selector
+    self._members  = config.members
+    self._default  = config.default
+
+    return self
+end
+
+function Ensemble:infer(input)
+    return Promise.new(function(resolve, reject)
+        self._selector:infer(input)
+            :next(function(stance)
+                local member = self._members[stance]
+                if not member and self._default then
+                    stance = self._default
+                    member = self._members[stance]
+                end
+                assert(member, "Worm.Ensemble -- no member registered for stance '" .. tostring(stance) .. "'")
+
+                member:infer(input)
+                    :next(function(action)
+                        resolve({ stance = stance, action = action })
+                    end)
+                    :toss(reject)
+            end)
+            :toss(reject)
+    end)
+end
+
+function Ensemble:lesson(stance, data)
+    local member = self._members[stance]
+    assert(member, "Worm.Ensemble -- no member registered for stance '" .. tostring(stance) .. "'")
+    return member:lesson(data)
+end
+
+function Ensemble:selectorLesson(data)
+    return self._selector:lesson(data)
+end
+
+function Ensemble:member(stance)
+    return self._members[stance]
+end
+
+function Ensemble:selector()
+    return self._selector
+end
+
+function Ensemble:stances()
+    local names = {}
+    for stance in pairs(self._members) do
+        table.insert(names, stance)
+    end
+    return names
+end
+
+return Ensemble
+]====]
+n_Worm_Ensemble.Parent = n_Worm
 
 local n_Worm__Libraries = Instance.new("Folder")
 n_Worm__Libraries.Name = "_Libraries"

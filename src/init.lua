@@ -3,6 +3,8 @@ local MLP      = require(script.MLP)
 local QLearner = require(script.QLearner)
 local CSF      = require(script.CSF)
 local NEAT     = require(script.NEAT)
+local League   = require(script.League)
+local Ensemble = require(script.Ensemble)
 
 local Worm = {}
 
@@ -12,6 +14,9 @@ Worm.MLP    = "MLP"
 Worm.QLEARN = "QLEARN"
 Worm.CSF    = "CSF"
 Worm.NEAT   = "NEAT"
+
+Worm.League   = League
+Worm.Ensemble = Ensemble
 
 local IMPLS = {
     MLP    = MLP,
