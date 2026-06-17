@@ -40,7 +40,30 @@ Worm is a neural networking library for Roblox -- MLP classifiers, Q-learning co
 
 ## Install
 
-Copy the `Worm` folder into `ReplicatedStorage` or `ServerScriptService` depending on your execution model.
+### Wally (recommended)
+
+Add to your `wally.toml`:
+
+```toml
+[dependencies]
+Worm = "ker/worm@0.1.0"
+```
+
+Then run:
+
+```sh
+wally install
+```
+
+Require from anywhere -- server or client:
+
+```lua
+local Worm = require(game.ReplicatedStorage.Packages.Worm)
+```
+
+### Manual
+
+Copy the `src` folder into `ReplicatedStorage` or `ServerScriptService` (renaming it to `Worm`), depending on your execution model.
 
 ```lua
 local Worm = require(game.ReplicatedStorage.Worm)
