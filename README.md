@@ -1,14 +1,5 @@
 <div align="center">
-
-```
-██╗    ██╗ ██████╗ ██████╗ ███╗   ███╗
-██║    ██║██╔═══██╗██╔══██╗████╗ ████║
-██║ █╗ ██║██║   ██║██████╔╝██╔████╔██║
-██║███╗██║██║   ██║██╔══██╗██║╚██╔╝██║
-╚███╔███╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║
-╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝
-```
-
+    
 **Adaptive neural intelligence for Roblox games.**
 
 [![Version](https://img.shields.io/badge/VERSION-0.1.0--beta-6C3EF4?style=for-the-badge)](https://github.com/NotKisoMomo/Worm)
